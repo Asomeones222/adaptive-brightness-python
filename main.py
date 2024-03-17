@@ -8,7 +8,7 @@ from PIL import Image
 from PIL import ImageGrab
 
 
-def derive_average_luminance(img: Image):
+def derive_luminance_from_img(img: Image) -> int:
     img = img.convert('RGB')  # Ensure image is in RGB format
 
     # Convert to a NumPy array
@@ -18,25 +18,25 @@ def derive_average_luminance(img: Image):
     # Luminance (perceived): (0.299*R + 0.587*G + 0.114*B)
     # Apply the formula to calculate luminance
     luminance = 0.299 * img_data[:, :, 0] + 0.587 * img_data[:, :, 1] + 0.114 * img_data[:, :, 2]
-    print(np.sum(luminance) / (img.height * img.width) / 255.0)
+    return int(np.sum(luminance) / (img.height * img.width) / 255.0)
 
 
-def take_screenshots(interval=1):
+def derive_current_luminance(interval=1):
     try:
         while True:
-            # Generate a timestamp for the filename
+            # Generate a timestamp
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            filename = f'screenshot_{timestamp}.png'
 
             # Take a screenshot using ImageGrab
             screenshot = ImageGrab.grab()
-            print(f'Screenshot taken as {filename}')
+            print(f'Screenshot taken on {timestamp}')
 
-            derive_average_luminance(screenshot)
+            yield derive_luminance_from_img(screenshot)
+
             # Wait for the specified interval (1 second by default)
             time.sleep(interval)
     except KeyboardInterrupt:
-        print("Stopped taking screenshots.")
+        print("Stopped watching luminance.")
 
 
 def list_displays_brightness() -> None:
@@ -71,4 +71,4 @@ def list_displays_brightness() -> None:
 
 
 if __name__ == "__main__":
-    take_screenshots(2)
+    next(derive_current_luminance(1))
