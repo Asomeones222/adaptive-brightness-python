@@ -18,7 +18,7 @@ def derive_luminance_from_img(img: Image) -> int:
     # Luminance (perceived): (0.299*R + 0.587*G + 0.114*B)
     # Apply the formula to calculate luminance
     luminance = 0.299 * img_data[:, :, 0] + 0.587 * img_data[:, :, 1] + 0.114 * img_data[:, :, 2]
-    return int(np.sum(luminance) / (img.height * img.width) / 255.0)
+    return int(np.sum(luminance) / (img.height * img.width) / 255.0 * 100)
 
 
 def derive_current_luminance(interval=1):
@@ -71,4 +71,4 @@ def list_displays_brightness() -> None:
 
 
 if __name__ == "__main__":
-    next(derive_current_luminance(1))
+    print(next(derive_current_luminance(1)))
