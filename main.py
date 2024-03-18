@@ -57,10 +57,10 @@ def set_displays_brightness(display_index: int, brightness: int):
     display = brightness_controls[display_index]
     if not display.InstanceName:
         raise Exception(
-            f"Display {display_index} {display.InstanceName} does not support software brightness control\n {display}.")
+            f"Display {display_index} {display.InstanceName} does not support software brightness control.")
 
     print(f"Display {display_index}: {display.InstanceName}")
-    print(f"Set display's brightness to: {brightness}")
+    print(f"Set display's brightness to {brightness}")
 
     display_methods = c.WmiMonitorBrightnessMethods()[display_index]
     display_methods.WmiSetBrightness(brightness, display_index)
