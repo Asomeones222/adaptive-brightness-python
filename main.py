@@ -21,54 +21,58 @@ def derive_luminance_from_img(img: Image) -> int:
     return int(np.sum(luminance) / (img.height * img.width) / 255.0 * 100)
 
 
-def derive_current_luminance(interval=1):
+def take_screencapture():
+    # Generate a timestamp
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    # Take a screenshot using ImageGrab
+    screencapture = ImageGrab.grab()
+    print(f'Screencapture taken on {timestamp}')
+    return screencapture
+
+
+def derive_current_luminance(interval: float = 1, sleep: bool = True):
     try:
+
         while True:
-            # Generate a timestamp
-            timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
-            # Take a screenshot using ImageGrab
-            screenshot = ImageGrab.grab()
-            print(f'Screenshot taken on {timestamp}')
-
-            yield derive_luminance_from_img(screenshot)
+            yield derive_luminance_from_img(take_screencapture())
 
             # Wait for the specified interval (1 second by default)
-            time.sleep(interval)
-    except KeyboardInterrupt:
+            if sleep:
+                time.sleep(interval)
+
+    except InterruptedError | KeyboardInterrupt:
         print("Stopped watching luminance.")
 
 
-def list_displays_brightness() -> None:
+def set_displays_brightness(display_index: int, brightness: int):
     # Initialize the WMI interface
     c: wmi.WMI = wmi.WMI(namespace='wmi')
 
     # Query all instances of WmiMonitorBrightness
     brightness_controls: List[wmi._wmi_object] = c.WmiMonitorBrightness()
-
     if not brightness_controls:
-        print("No displays supporting software brightness control were found.")
-        return
+        raise Exception("No displays supporting software brightness control were found.")
 
-    for i, b in enumerate(brightness_controls, start=0):
-        if not b.InstanceName:
-            print(f"Display {i + 1} does not support software brightness control")
-            continue
+    display = brightness_controls[display_index]
+    if not display.InstanceName:
+        raise Exception(
+            f"Display {display_index} {display.InstanceName} does not support software brightness control\n {display}.")
 
-        print(f"Display {i + 1}: {b.InstanceName}")
-        print("Set display's brightness to: ", end=" ")
+    print(f"Display {display_index}: {display.InstanceName}")
+    print(f"Set display's brightness to: {brightness}")
 
-        while True:
-            user_brightness_input = input()
-            if not user_brightness_input.isdigit() or int(user_brightness_input) > 100 \
-                    or int(user_brightness_input) < 0:
-                print("Please enter a value between 0 and 100 inclusive")
-            else:
-                break
-
-        ith_display_methods = c.WmiMonitorBrightnessMethods()[i]
-        ith_display_methods.WmiSetBrightness(int(user_brightness_input), i)
+    display_methods = c.WmiMonitorBrightnessMethods()[display_index]
+    display_methods.WmiSetBrightness(brightness, display_index)
+    return display.CurrentBrightness
 
 
 if __name__ == "__main__":
-    print(next(derive_current_luminance(1)))
+    previous_brightness = -100
+    # The difference between previous and next brightness needed to set the new brightness
+    # We use tolerance, so we don't send too many unnecessary commands to the display
+    TOLERANCE = 5
+    for luminance in derive_current_luminance(0.5):
+        next_brightness = int(100 - luminance / 2)
+        if abs(next_brightness - previous_brightness) > TOLERANCE:
+            previous_brightness = set_displays_brightness(0, next_brightness)
