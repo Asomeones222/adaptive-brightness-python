@@ -41,7 +41,7 @@ def derive_current_luminance(interval: float = 1, sleep: bool = True):
             if sleep:
                 time.sleep(interval)
 
-    except InterruptedError | KeyboardInterrupt:
+    except KeyboardInterrupt:
         print("Stopped watching luminance.")
 
 
