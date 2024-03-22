@@ -1,5 +1,4 @@
 import argparse
-import datetime
 import math
 import time
 from typing import List
@@ -24,24 +23,17 @@ def derive_luminance_from_img(img: Image) -> int:
 
 
 def take_screencapture():
-    # Generate a timestamp
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
-    # Take a screenshot using ImageGrab
     screencapture = ImageGrab.grab()
+    # timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     # print(f'Screencapture taken on {timestamp}')
     return screencapture
 
 
-def derive_current_luminance(interval: float = 1, sleep: bool = True):
+def derive_current_luminance(interval: float = 1):
     try:
-
         while True:
             yield derive_luminance_from_img(take_screencapture())
-
-            # Wait for the specified interval (1 second by default)
-            if sleep:
-                time.sleep(interval)
+            time.sleep(interval)
 
     except KeyboardInterrupt:
         print("Stopped watching luminance.")
@@ -95,7 +87,7 @@ if __name__ == "__main__":
         -t      Tolerance: The difference between previous and next brightness needed to set new brightness. Default = 5, minimum = 5.
         -max    Max brightness. Default = 100
         -min    Min brightness. Default = 0
-        -i      Interval duration (seconds): Wait time before calling next luminance calculation. Default = 0.5, min = 0.1 .
+        -i      Interval duration (seconds): Wait time before calling next luminance calculation. Default = 0.2, min = 0.01 .
         """)
     parser.add_argument('-t')
     parser.add_argument('-max')
@@ -106,14 +98,14 @@ if __name__ == "__main__":
     TOLERANCE = int(validate_arg(args.t, d=5, min=5, max=100))
     MAX_BRIGHTNESS = int(validate_arg(args.max, d=100, min=0, max=100))
     MIN_BRIGHTNESS = int(validate_arg(args.min, d=0, min=0, max=100))
-    INTERVAL = validate_arg(args.i, d=0.5, min=0.1, max=math.inf)
+    INTERVAL = validate_arg(args.i, d=0.2, min=0.01, max=math.inf)
 
     print("tolerance:", TOLERANCE)
     print("max brightness:", MAX_BRIGHTNESS)
     print("min brightness:", MIN_BRIGHTNESS)
     print("interval:", INTERVAL)
 
-    previous_brightness = -100
+    previous_brightness = 0
     for luminance in derive_current_luminance(INTERVAL):
         next_brightness = int(100 - luminance / 2)
         if abs(next_brightness - previous_brightness) > TOLERANCE:
