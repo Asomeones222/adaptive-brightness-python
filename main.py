@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import time
 from typing import List
@@ -27,7 +28,7 @@ def take_screencapture():
 
     # Take a screenshot using ImageGrab
     screencapture = ImageGrab.grab()
-    print(f'Screencapture taken on {timestamp}')
+    # print(f'Screencapture taken on {timestamp}')
     return screencapture
 
 
@@ -67,12 +68,62 @@ def set_displays_brightness(display_index: int, brightness: int):
     return display.CurrentBrightness
 
 
+def is_valid_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
 if __name__ == "__main__":
-    previous_brightness = -100
-    # The difference between previous and next brightness needed to set the new brightness
-    # We use tolerance, so we don't send too many unnecessary commands to the display
+    parser = argparse.ArgumentParser(
+        prog='Adaptive brightness',
+        description='Sets brightness based on the luminance of the currently displayed content',
+        epilog="""
+        -t      Tolerance: The difference between previous and next brightness needed to set new brightness. Default = 5, minimum = 5.
+        -max    Max brightness. Default = 100
+        -min    Min brightness. Default = 0
+        -i      Interval duration (seconds): Wait time before calling next luminance calculation. Default = 0.5, min = 0.1 .
+        """)
+    parser.add_argument('-t')
+    parser.add_argument('-max')
+    parser.add_argument('-min')
+    parser.add_argument('-i')
+    args = parser.parse_args()
+
     TOLERANCE = 5
-    for luminance in derive_current_luminance(0.5):
+    if args.t.isdigit() and int(args.t) >= 5:
+        TOLERANCE = int(args.t)
+    else:
+        raise Exception("tolerance was not set, invalid value was passed")
+
+    MAX_BRIGHTNESS = 100
+    if args.max.isdigit() and int(args.max) <= 100:
+        MAX_BRIGHTNESS = int(args.max)
+    else:
+        raise Exception("max brightness was not set, invalid value was passed")
+
+    MIN_BRIGHTNESS = 0
+    if args.min.isdigit() and int(args.min) >= 0:
+        MIN_BRIGHTNESS = int(args.min)
+    else:
+        raise Exception("min brightness was not set, invalid value was passed")
+
+    INTERVAL = 0.5
+    if is_valid_float(args.i) and float(args.i) >= 0.1:
+        INTERVAL = float(args.i)
+    else:
+        raise Exception("interval was not set, invalid value was passed")
+
+    print("tolerance:", TOLERANCE)
+    print("max brightness:", MAX_BRIGHTNESS)
+    print("min brightness:", MIN_BRIGHTNESS)
+    print("interval:", INTERVAL)
+
+    previous_brightness = -100
+    for luminance in derive_current_luminance(INTERVAL):
         next_brightness = int(100 - luminance / 2)
         if abs(next_brightness - previous_brightness) > TOLERANCE:
-            previous_brightness = set_displays_brightness(0, next_brightness)
+            previous_brightness = \
+                set_displays_brightness(0, max(min(next_brightness, MAX_BRIGHTNESS), MIN_BRIGHTNESS))
