@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import math
 import time
 from typing import List
 
@@ -76,6 +77,16 @@ def is_valid_float(s):
         return False
 
 
+def validate_arg(a, d, min, max):
+    if a:
+        if is_valid_float(a) and min <= float(a) <= max:
+            return float(a)
+        else:
+            raise Exception("interval was not set, invalid value was passed")
+    else:
+        return d
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog='Adaptive brightness',
@@ -92,29 +103,10 @@ if __name__ == "__main__":
     parser.add_argument('-i')
     args = parser.parse_args()
 
-    TOLERANCE = 5
-    if args.t.isdigit() and int(args.t) >= 5:
-        TOLERANCE = int(args.t)
-    else:
-        raise Exception("tolerance was not set, invalid value was passed")
-
-    MAX_BRIGHTNESS = 100
-    if args.max.isdigit() and int(args.max) <= 100:
-        MAX_BRIGHTNESS = int(args.max)
-    else:
-        raise Exception("max brightness was not set, invalid value was passed")
-
-    MIN_BRIGHTNESS = 0
-    if args.min.isdigit() and int(args.min) >= 0:
-        MIN_BRIGHTNESS = int(args.min)
-    else:
-        raise Exception("min brightness was not set, invalid value was passed")
-
-    INTERVAL = 0.5
-    if is_valid_float(args.i) and float(args.i) >= 0.1:
-        INTERVAL = float(args.i)
-    else:
-        raise Exception("interval was not set, invalid value was passed")
+    TOLERANCE = int(validate_arg(args.t, d=5, min=5, max=100))
+    MAX_BRIGHTNESS = int(validate_arg(args.max, d=100, min=0, max=100))
+    MIN_BRIGHTNESS = int(validate_arg(args.min, d=0, min=0, max=100))
+    INTERVAL = validate_arg(args.i, d=0.5, min=0.1, max=math.inf)
 
     print("tolerance:", TOLERANCE)
     print("max brightness:", MAX_BRIGHTNESS)
