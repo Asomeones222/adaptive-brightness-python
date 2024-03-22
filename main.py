@@ -82,7 +82,7 @@ def validate_arg(a, d, min, max):
         if is_valid_float(a) and min <= float(a) <= max:
             return float(a)
         else:
-            raise Exception("interval was not set, invalid value was passed")
+            raise Exception(f"Argument was not set or an invalid value was passed: {a}")
     else:
         return d
 
