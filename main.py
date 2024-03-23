@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     previous_brightness = 0
     for luminance in derive_current_luminance(INTERVAL):
-        next_brightness = int(100 - luminance / 2)
+        next_brightness = int(MAX_BRIGHTNESS - luminance / 2)
         if abs(next_brightness - previous_brightness) > TOLERANCE:
             previous_brightness = \
                 set_displays_brightness(0, max(min(next_brightness, MAX_BRIGHTNESS), MIN_BRIGHTNESS))
